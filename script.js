@@ -13,6 +13,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
+const auth = firebase.auth();
 
 // ===== CLOUDINARY CONFIGURATION =====
 const CLOUDINARY_CONFIG = {
@@ -33,8 +34,77 @@ class TaskManager {
         this.autoSaveTimeout = null;
         this.currentAttachment = null;
         this.currentNoteMedia = null;
+        this.currentUser = null;
         
-        this.init();
+        this.checkAuth();
+    }
+
+    checkAuth() {
+        // Show loading screen
+        document.getElementById('loading-screen').classList.remove('hidden');
+        document.getElementById('main-container').classList.add('hidden');
+        
+        // Listen for auth state changes
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                this.currentUser = user;
+                this.getUserProfile();
+                this.init();
+            } else {
+                // User is signed out, redirect to login
+                window.location.href = 'login.html';
+            }
+        });
+    }
+    
+    async getUserProfile() {
+        try {
+            const userDoc = await db.collection('users').doc(this.currentUser.uid).get();
+            if (userDoc.exists) {
+                this.userProfile = userDoc.data();
+                // Update UI with user info
+                this.updateUserUI();
+            }
+        } catch (error) {
+            console.error('Error getting user profile:', error);
+        }
+    }
+    
+    updateUserUI() {
+        const welcomeTitle = document.getElementById('welcome-title');
+        if (welcomeTitle && this.userProfile) {
+            welcomeTitle.textContent = `Welcome back, ${this.userProfile.username}!`;
+        }
+        
+        // Add user info to header
+        const headerActions = document.querySelector('.header-actions');
+        if (headerActions) {
+            const userButton = document.createElement('div');
+            userButton.className = 'user-button';
+            userButton.innerHTML = `
+                <span>${this.userProfile.username}</span>
+                <button id="logout-btn" class="logout-btn" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            `;
+            headerActions.prepend(userButton);
+            
+            // Add logout handler
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                this.handleLogout();
+            });
+        }
+    }
+    
+    async handleLogout() {
+        try {
+            await auth.signOut();
+            window.location.href = 'login.html';
+        } catch (error) {
+            console.error('Error signing out:', error);
+            this.showToast('Failed to log out. Please try again.', 'error');
+        }
     }
 
     async init() {
@@ -44,7 +114,7 @@ class TaskManager {
             this.displayCurrentDate();
             this.displayMotivationalQuote();
             
-            // Load data from Firebase
+            // Load data from Firebase for current user
             await this.loadTasks();
             await this.loadNotes();
             
@@ -61,14 +131,35 @@ class TaskManager {
         // Tab navigation
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.switchTab(e.target.dataset.tab);
+                // Find the element with the data-tab attribute (button or its parent)
+                let element = e.target;
+                while (element && !element.dataset.tab) {
+                    element = element.parentElement;
+                }
+                
+                if (element && element.dataset.tab) {
+                    console.log(`Switching to tab: ${element.dataset.tab}`);
+                    this.switchTab(element.dataset.tab);
+                } else {
+                    console.error('Tab button clicked but no data-tab attribute found!', e.target);
+                }
             });
         });
 
         // Filter buttons
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.setFilter(e.target.dataset.filter);
+                // Find the element with the data-filter attribute (button or its parent)
+                let element = e.target;
+                while (element && !element.dataset.filter) {
+                    element = element.parentElement;
+                }
+                
+                if (element && element.dataset.filter) {
+                    this.setFilter(element.dataset.filter);
+                } else {
+                    console.error('Filter button clicked but no data-filter attribute found!', e.target);
+                }
             });
         });
 
@@ -260,23 +351,46 @@ class TaskManager {
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+        
+        const tabButton = document.querySelector(`[data-tab="${tab}"]`);
+        if (tabButton) {
+            tabButton.classList.add('active');
+        } else {
+            console.warn(`Tab button with data-tab="${tab}" not found`);
+        }
 
         // Update content sections
         document.querySelectorAll('.content-section').forEach(section => {
             section.classList.remove('active');
         });
-        document.getElementById(`${tab}-section`).classList.add('active');
+        
+        const tabSection = document.getElementById(`${tab}-section`);
+        if (tabSection) {
+            tabSection.classList.add('active');
+        } else {
+            console.warn(`Tab section with id="${tab}-section" not found`);
+        }
 
         this.currentTab = tab;
     }
 
     setFilter(filter) {
+        if (!filter) {
+            console.error('Invalid filter value:', filter);
+            return;
+        }
+        
         // Update filter buttons
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+        
+        const filterButton = document.querySelector(`[data-filter="${filter}"]`);
+        if (filterButton) {
+            filterButton.classList.add('active');
+        } else {
+            console.warn(`Filter button with data-filter="${filter}" not found`);
+        }
 
         this.currentFilter = filter;
         this.renderTasks();
@@ -285,7 +399,13 @@ class TaskManager {
     // ===== TASK MANAGEMENT =====
     async loadTasks() {
         try {
-            const snapshot = await db.collection('tasks').orderBy('createdAt', 'desc').get();
+            if (!this.currentUser) return;
+            
+            const snapshot = await db.collection('tasks')
+                .where('userId', '==', this.currentUser.uid)
+                .orderBy('createdAt', 'desc')
+                .get();
+                
             this.tasks = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -299,6 +419,10 @@ class TaskManager {
 
     async saveTask() {
         if (!this.validateTaskForm()) return;
+        if (!this.currentUser) {
+            this.showToast('You must be logged in to save tasks', 'error');
+            return;
+        }
 
         const formData = new FormData(document.getElementById('task-form'));
         const taskData = {
@@ -308,6 +432,7 @@ class TaskManager {
             priority: document.getElementById('task-priority').value,
             completed: false,
             attachment: this.currentAttachment || null,
+            userId: this.currentUser.uid,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -318,6 +443,7 @@ class TaskManager {
             if (this.editingTask) {
                 await db.collection('tasks').doc(this.editingTask.id).update({
                     ...taskData,
+                    userId: this.currentUser.uid, // Ensure userId is set
                     createdAt: this.editingTask.createdAt // Preserve original creation date
                 });
                 this.showToast('Task updated successfully!', 'success');
@@ -600,7 +726,9 @@ class TaskManager {
     // ===== NOTES MANAGEMENT =====
     async loadNotes() {
         try {
-            const doc = await db.collection('notes').doc('main').get();
+            if (!this.currentUser) return;
+            
+            const doc = await db.collection('notes').doc(this.currentUser.uid).get();
             if (doc.exists) {
                 const data = doc.data();
                 this.notes = data.content || '';
@@ -654,16 +782,18 @@ class TaskManager {
     
     async removeNoteAttachment(publicId) {
         try {
+            if (!this.currentUser) return;
+            
             this.setSyncStatus('syncing');
             
-            const noteDoc = await db.collection('notes').doc('main').get();
+            const noteDoc = await db.collection('notes').doc(this.currentUser.uid).get();
             if (!noteDoc.exists) return;
             
             const data = noteDoc.data();
             const attachments = data.attachments || [];
             const updatedAttachments = attachments.filter(a => a.publicId !== publicId);
             
-            await db.collection('notes').doc('main').update({
+            await db.collection('notes').doc(this.currentUser.uid).update({
                 attachments: updatedAttachments,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -687,10 +817,16 @@ class TaskManager {
     
     async saveNotes() {
         try {
+            if (!this.currentUser) {
+                this.showToast('You must be logged in to save notes', 'error');
+                return;
+            }
+            
             this.setSyncStatus('syncing');
             
-            await db.collection('notes').doc('main').set({
+            await db.collection('notes').doc(this.currentUser.uid).set({
                 content: this.notes,
+                userId: this.currentUser.uid,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
             
@@ -707,7 +843,7 @@ class TaskManager {
             this.setSyncStatus('error');
         }
     }
-
+    
     openMediaModal() {
         document.getElementById('media-modal').classList.add('show');
         this.currentNoteMedia = null;
@@ -726,10 +862,15 @@ class TaskManager {
         }
         
         try {
+            if (!this.currentUser) {
+                this.showToast('You must be logged in to save media', 'error');
+                return;
+            }
+            
             this.setSyncStatus('syncing');
             
             // Get existing note data
-            const noteDoc = await db.collection('notes').doc('main').get();
+            const noteDoc = await db.collection('notes').doc(this.currentUser.uid).get();
             const data = noteDoc.exists ? noteDoc.data() : {};
             const attachments = data.attachments || [];
             
@@ -737,8 +878,9 @@ class TaskManager {
             attachments.push(this.currentNoteMedia);
             
             // Update document
-            await db.collection('notes').doc('main').set({
+            await db.collection('notes').doc(this.currentUser.uid).set({
                 attachments,
+                userId: this.currentUser.uid,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
             
@@ -753,7 +895,7 @@ class TaskManager {
             this.setSyncStatus('error');
         }
     }
-
+    
     renderTasks() {
         const container = document.getElementById('tasks-list');
         const emptyState = document.getElementById('tasks-empty-state');

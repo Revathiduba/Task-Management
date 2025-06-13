@@ -32,6 +32,10 @@
                         <i class="fas fa-cloud-upload-alt"></i>
                         <span id="sync-status">Synced</span>
                     </div>
+                    <!-- Logout Button -->
+                    <button id="logout-btn" class="btn-secondary" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
                 </div>
             </div>
         </header>
@@ -41,7 +45,7 @@
             <!-- Welcome Section -->
             <section class="welcome-section">
                 <div class="welcome-content">
-                    <h1 class="welcome-title">Welcome back!</h1>
+                    <h1 class="welcome-title" id="welcome-title">Welcome back!</h1>
                     <p class="welcome-date" id="current-date"></p>
                     <p class="motivational-quote" id="motivational-quote">
                         "The secret of getting ahead is getting started."
@@ -228,6 +232,7 @@
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage-compat.js"></script>
     
