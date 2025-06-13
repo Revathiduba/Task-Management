@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Premium Task Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>Loading TaskFlow...</p>
+    </div>
+
+    <!-- Main Container -->
+    <div id="main-container" class="main-container hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-tasks"></i>
+                    <span>TaskFlow</span>
+                </div>
+                <div class="header-actions">
+                    <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="sync-indicator">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span id="sync-status">Synced</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard -->
+        <main class="dashboard">
+            <!-- Welcome Section -->
+            <section class="welcome-section">
+                <div class="welcome-content">
+                    <h1 class="welcome-title">Welcome back!</h1>
+                    <p class="welcome-date" id="current-date"></p>
+                    <p class="motivational-quote" id="motivational-quote">
+                        "The secret of getting ahead is getting started."
+                    </p>
+                </div>
+            </section>
+
+            <!-- Navigation Tabs -->
+            <nav class="tab-navigation">
+                <button class="tab-btn active" data-tab="tasks">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Tasks</span>
+                </button>
+                <button class="tab-btn" data-tab="notes">
+                    <i class="fas fa-sticky-note"></i>
+                    <span>Notepad</span>
+                </button>
+            </nav>
+
+            <!-- Search Bar -->
+            <div class="search-section">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Search tasks and notes...">
+                </div>
+            </div>
+
+            <!-- Tasks Section -->
+            <section id="tasks-section" class="content-section active">
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="pending">Pending</button>
+                    <button class="filter-btn" data-filter="completed">Completed</button>
+                    <button class="filter-btn" data-filter="priority">Priority</button>
+                </div>
+
+                <!-- Tasks Container -->
+                <div class="tasks-container">
+                    <div id="tasks-list" class="tasks-list">
+                        <!-- Empty State -->
+                        <div id="tasks-empty-state" class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>No tasks yet — ready to conquer something?</h3>
+                            <p>Click the + button to add your first task</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notes Section -->
+            <section id="notes-section" class="content-section">
+                <div class="notes-container">
+                    <div class="notes-header">
+                        <h2>Your Digital Notepad</h2>
+                        <div class="notes-actions">
+                            <button id="attach-note-media" class="btn-secondary">
+                                <i class="fas fa-paperclip"></i>
+                                Attach Media
+                            </button>
+                            <div class="save-indicator" id="save-indicator">
+                                <i class="fas fa-check"></i>
+                                <span>Saved!</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="notepad-editor">
+                        <textarea 
+                            id="notepad-content" 
+                            placeholder="Your thoughts deserve a space. Start writing..."
+                            class="notepad-textarea"
+                        ></textarea>
+                        
+                        <div id="note-attachments" class="note-attachments"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Floating Action Button -->
+        <button id="fab" class="fab" title="Add New Task">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <!-- Task Modal -->
+        <div id="task-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modal-title">Add New Task</h2>
+                    <button class="modal-close" id="modal-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="task-form" class="task-form">
+                    <div class="form-group">
+                        <label for="task-title">Task Title *</label>
+                        <input type="text" id="task-title" required>
+                        <div class="validation-message">Please enter a task title</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="task-description">Description</label>
+                        <textarea id="task-description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="task-deadline">Deadline *</label>
+                            <input type="datetime-local" id="task-deadline" required>
+                            <div class="validation-message">Please set a deadline</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="task-priority">Priority</label>
+                            <select id="task-priority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Attachment (Optional)</label>
+                        <div class="file-upload-area" id="file-upload-area">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Click to upload or drag & drop</span>
+                            <small>Max file size: 5MB</small>
+                            <input type="file" id="task-attachment" accept="image/*,video/*" hidden>
+                        </div>
+                        <div id="attachment-preview" class="attachment-preview"></div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancel-task">Cancel</button>
+                        <button type="submit" class="btn-primary" id="save-task">
+                            <i class="fas fa-save"></i>
+                            Save Task
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Media Modal -->
+        <div id="media-modal" class="modal">
+            <div class="modal-content media-modal-content">
+                <div class="modal-header">
+                    <h2>Attach Media</h2>
+                    <button class="modal-close" id="media-modal-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="media-upload-area" id="media-upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Click to upload media</span>
+                    <small>Images and videos up to 5MB</small>
+                    <input type="file" id="media-attachment" accept="image/*,video/*" hidden>
+                </div>
+                
+                <div id="media-preview" class="media-preview"></div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancel-media">Cancel</button>
+                    <button type="button" class="btn-primary" id="save-media">
+                        <i class="fas fa-save"></i>
+                        Attach Media
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="toast">
+            <div class="toast-content">
+                <i class="toast-icon"></i>
+                <span class="toast-message"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage-compat.js"></script>
+    
+    <!-- Cloudinary SDK -->
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+    
+    <!-- Main Script -->
+    <script src="script.js"></script>
+</body>
+</html>
