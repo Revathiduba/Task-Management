@@ -1334,6 +1334,14 @@ select:focus {
     font-weight: 500;
     padding-right: var(--spacing-lg);
     border-right: 1px solid var(--bg-tertiary);
+    margin-right: var(--spacing-md);
+}
+
+.user-button span {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .logout-btn {
@@ -1348,12 +1356,41 @@ select:focus {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .logout-btn:hover {
     background: var(--danger-color);
     color: white;
     transform: scale(1.1);
+}
+
+.logout-btn:active {
+    transform: scale(0.95);
+}
+
+.logout-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.logout-btn::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: var(--primary-color);
+    border-radius: 50%;
+    transform: scale(0);
+    opacity: 0.3;
+    transition: all 0.3s;
+}
+
+.logout-btn:focus:not(:disabled)::after {
+    transform: scale(1);
 }
 
 /* ===== AUTH STYLES ADDITIONS ===== */

@@ -80,10 +80,16 @@ class TaskManager {
         // Add user info to header
         const headerActions = document.querySelector('.header-actions');
         if (headerActions) {
+            // Remove existing user button if it exists to avoid duplicates
+            const existingUserButton = document.querySelector('.user-button');
+            if (existingUserButton) {
+                existingUserButton.remove();
+            }
+            
             const userButton = document.createElement('div');
             userButton.className = 'user-button';
             userButton.innerHTML = `
-                <span>${this.userProfile.username}</span>
+                <span>${this.userProfile.username || 'User'}</span>
                 <button id="logout-btn" class="logout-btn" title="Logout">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
@@ -99,10 +105,40 @@ class TaskManager {
     
     async handleLogout() {
         try {
+            // Show loading state
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                logoutBtn.disabled = true;
+            }
+            
+            this.showToast('Logging out...', 'info');
+            
+            // Clear any cached data
+            this.tasks = [];
+            this.notes = '';
+            localStorage.removeItem('currentTab');
+            
+            // Sign out from Firebase
             await auth.signOut();
-            window.location.href = 'login.html';
+            
+            // Show success message before redirecting
+            this.showToast('Logout successful!', 'success');
+            
+            // Add a small delay to show the success message
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
         } catch (error) {
             console.error('Error signing out:', error);
+            
+            // Reset logout button state
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i>';
+                logoutBtn.disabled = false;
+            }
+            
             this.showToast('Failed to log out. Please try again.', 'error');
         }
     }
