@@ -62,5 +62,42 @@
     
     <!-- Auth Script -->
     <script src="auth.js"></script>
+    
+    <script>
+        // Additional inline script to ensure login button works
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM loaded - checking login form");
+            const loginForm = document.getElementById('login-form');
+            const loginButton = document.querySelector('.btn-auth');
+            
+            if (loginForm) {
+                console.log("Login form found");
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log("Login form submitted from inline handler");
+                    if (window.authManager) {
+                        window.authManager.handleLogin();
+                    } else {
+                        console.error("Auth manager not initialized");
+                    }
+                });
+            } else {
+                console.error("Login form not found");
+            }
+            
+            if (loginButton) {
+                console.log("Login button found");
+                loginButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log("Login button clicked from inline handler");
+                    if (window.authManager) {
+                        window.authManager.handleLogin();
+                    } else {
+                        console.error("Auth manager not initialized");
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

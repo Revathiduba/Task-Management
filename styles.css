@@ -1356,15 +1356,29 @@ select:focus {
     transform: scale(1.1);
 }
 
-@media (max-width: 480px) {
-    .auth-card {
-        padding: var(--spacing-xl);
-    }
-    
-    .user-button {
-        margin-bottom: var(--spacing-md);
-        padding-right: 0;
-        border-right: none;
-        justify-content: center;
-    }
+/* ===== AUTH STYLES ADDITIONS ===== */
+.auth-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--accent-color);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    margin: var(--spacing-lg) 0;
+    font-weight: 500;
+    text-align: center;
+    display: none;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.auth-success.show {
+    display: block;
+    opacity: 1;
+}
+
+.form-group.loading input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: calc(100% - 10px) center;
+    background-size: 20px;
+    padding-right: 40px;
 }
